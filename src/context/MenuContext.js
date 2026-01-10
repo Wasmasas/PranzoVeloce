@@ -11,6 +11,7 @@ export function MenuProvider({ children }) {
     const [orders, setOrders] = useState([]);
     const [feedbacks, setFeedbacks] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [storageMode, setStorageMode] = useState('Unknown');
 
     // Fetch initial data from API
     const fetchData = useCallback(async () => {
@@ -22,6 +23,7 @@ export function MenuProvider({ children }) {
                 setAllDishes(data.allDishes || []);
                 setOrders(data.orders || []);
                 setFeedbacks(data.feedbacks || []);
+                setStorageMode(data._storageMode || 'Unknown');
             }
         } catch (error) {
             console.error('Failed to fetch data:', error);
@@ -54,6 +56,8 @@ export function MenuProvider({ children }) {
                 setOrders(newData.orders);
                 setFeedbacks(newData.feedbacks || []);
                 return true;
+            } else {
+                console.error('API Error:', res.status);
             }
         } catch (error) {
             console.error('Action failed:', error);
@@ -125,7 +129,8 @@ export function MenuProvider({ children }) {
             deleteAllOrders,
             submitFeedback,
             deleteFeedback,
-            resetDay
+            resetDay,
+            storageMode
         }}>
             {children}
         </MenuContext.Provider>

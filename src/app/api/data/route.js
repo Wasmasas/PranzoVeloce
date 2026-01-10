@@ -62,6 +62,8 @@ async function writeDb(data) {
 export async function GET() {
     // Always dynamic to prevent Next.js from caching the DB state statistically
     const data = await readDb();
+    // Inject storage mode info for client debugging
+    data._storageMode = USE_CLOUD_DB ? 'KV (Cloud)' : 'File (Local)';
     return NextResponse.json(data);
 }
 

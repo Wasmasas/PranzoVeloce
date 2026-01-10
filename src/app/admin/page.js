@@ -27,7 +27,9 @@ export default function AdminPage() {
         deleteAllOrders,
         cancelOrder,
         resetDay,
-        loading
+
+        loading,
+        storageMode
     } = useMenu();
 
     const toggleOrderSelection = (id) => {
