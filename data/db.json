@@ -1,0 +1,68 @@
+{
+  "activeMenu": [
+    {
+      "name": "asd",
+      "price": "12",
+      "category": "primo",
+      "id": "1768056307730"
+    },
+    {
+      "name": "saaaa",
+      "price": "12",
+      "category": "primo",
+      "id": "1768056319159"
+    },
+    {
+      "name": "sddsd",
+      "price": "15",
+      "category": "primo",
+      "id": "1768056333165"
+    },
+    {
+      "name": "wqe",
+      "price": "3",
+      "category": "contorno",
+      "id": "1768056341635"
+    },
+    {
+      "name": "wqed",
+      "price": "4",
+      "category": "contorno",
+      "id": "1768056349036"
+    }
+  ],
+  "allDishes": [
+    {
+      "name": "asd",
+      "price": "12",
+      "category": "primo",
+      "id": "1768056307730"
+    },
+    {
+      "name": "saaaa",
+      "price": "12",
+      "category": "primo",
+      "id": "1768056319159"
+    },
+    {
+      "name": "sddsd",
+      "price": "15",
+      "category": "primo",
+      "id": "1768056333165"
+    },
+    {
+      "name": "wqe",
+      "price": "3",
+      "category": "contorno",
+      "id": "1768056341635"
+    },
+    {
+      "name": "wqed",
+      "price": "4",
+      "category": "contorno",
+      "id": "1768056349036"
+    }
+  ],
+  "orders": [],
+  "feedbacks": []
+}

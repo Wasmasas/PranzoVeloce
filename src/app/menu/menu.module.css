@@ -1,0 +1,167 @@
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    padding-bottom: 8rem;
+    /* Space for footer */
+}
+
+.header {
+    margin-bottom: 2rem;
+}
+
+.backLink {
+    color: var(--text-secondary);
+    text-decoration: none;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.categorySection {
+    margin-bottom: 3rem;
+}
+
+.categoryTitle {
+    text-transform: capitalize;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    background: white;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+    box-shadow: var(--shadow-sm);
+}
+
+.card.selected {
+    border-color: var(--primary);
+    background-color: #FFF7ED;
+}
+
+.cardInfo h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.price {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: white;
+    padding: 0.25rem;
+    border-radius: 99px;
+    border: 1px solid var(--border-color);
+}
+
+.controlBtn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.controlBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.addBtn {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.qty {
+    font-weight: 600;
+    min-width: 1rem;
+    text-align: center;
+}
+
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: 1.5rem;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    border-top: 1px solid var(--border-color);
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+}
+
+.submitRow {
+    display: flex;
+    gap: 1rem;
+    max-width: 800px;
+    width: 100%;
+    align-items: center;
+}
+
+.summary {
+    display: none;
+    /* Mobile optimization */
+}
+
+.nameInput {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+}
+
+.submitBtn {
+    flex: 0 0 auto;
+}
+
+.successCard {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    margin-top: 4rem;
+}
+
+.successCard h1 {
+    color: var(--success);
+    margin-bottom: 1rem;
+}
+
+.successCard p {
+    margin-bottom: 2rem;
+    color: var(--text-secondary);
+}
+
+.emptyState {
+    text-align: center;
+    padding: 4rem;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+}

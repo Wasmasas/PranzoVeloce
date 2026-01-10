@@ -1,0 +1,269 @@
+.adminPage {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.backLink {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.clearBtn {
+    background: var(--danger);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+}
+
+.mainGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+@media (max-width: 768px) {
+    .mainGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.section {
+    background: white;
+    padding: 0;
+}
+
+.form {
+    background: var(--surface-color);
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.input,
+.select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.row {
+    display: flex;
+    gap: 1rem;
+}
+
+.menuList ul,
+.summaryList {
+    list-style: none;
+    padding: 0;
+}
+
+.menuItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    background: white;
+}
+
+.tag {
+    font-size: 0.75rem;
+    background: var(--bg-color);
+    padding: 0.2rem 0.5rem;
+    border-radius: 99px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-left: 0.5rem;
+}
+
+.deleteBtn {
+    background: none;
+    color: var(--danger);
+    font-size: 1.5rem;
+    line-height: 1;
+    padding: 0 0.5rem;
+}
+
+.summaryCard {
+    background: #FFF7ED;
+    /* Orange-50 */
+    border-color: #FED7AA;
+    /* Orange-200 */
+    color: #9A3412;
+    /* Orange-900 */
+}
+
+.summaryItem {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.count {
+    font-weight: 800;
+}
+
+.ordersList {
+    margin-top: 2rem;
+}
+
+.orderCard {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: var(--radius-md);
+}
+
+.time {
+    float: right;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.empty {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Auth */
+.loginOverlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.loginCard {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tab {
+    padding: 1rem;
+    background: none;
+    border: none;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-bottom: 2px solid transparent;
+}
+
+.activeTab {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+/* Dish List (Archive) */
+.dishList {
+    list-style: none;
+    padding: 0;
+    margin-top: 1rem;
+}
+
+.dishItem {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Selection Grid (Daily Menu) */
+.selectionGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+.selectionCard {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.selectionCard:hover {
+    border-color: var(--primary);
+}
+
+.activeCard {
+    background: #FFF7ED;
+    border-color: var(--primary);
+}
+
+.checkbox {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    margin-right: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-weight: bold;
+}
+
+.activeCard .checkbox {
+    border-color: var(--primary);
+    background: white;
+}
+
+.small {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.hint {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+/* Feedback */
+.feedbackList {
+    list-style: none;
+    padding: 0;
+}
+
+.feedbackItem {
+    padding: 1rem;
+    background: #F1F5F9;
+    /* Slate-100 */
+    border-radius: var(--radius-md);
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
