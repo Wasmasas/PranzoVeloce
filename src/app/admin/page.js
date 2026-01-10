@@ -355,11 +355,9 @@ export default function AdminPage() {
                         ))}
                     </div>
                 </section>
-            </main>
-            </main>
-            <footer style={{ marginTop: '2rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-                PranzoVeloce Admin v1.1 - {new Date().toLocaleDateString()}
-            </footer>
+                <footer style={{ marginTop: '2rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                    PranzoVeloce Admin v1.1 - {new Date().toLocaleDateString()}
+                </footer>
         </div >
     );
 }
