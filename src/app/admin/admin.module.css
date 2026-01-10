@@ -17,11 +17,29 @@
     font-weight: 500;
 }
 
-.clearBtn {
-    background: var(--danger);
-    color: white;
+.headerControls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.logoutBtn {
+    background: none;
+    border: 1px solid var(--border-color);
     padding: 0.5rem 1rem;
     border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.resetBtn {
+    background: var(--danger);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
     font-size: 0.9rem;
 }
 
