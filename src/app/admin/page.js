@@ -359,7 +359,8 @@ export default function AdminPage() {
                 </section>
             </main>
             <footer style={{ marginTop: '2rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-                PranzoVeloce Admin v1.1 - {new Date().toLocaleDateString()}
+                PranzoVeloce Admin v1.2 (Cloud Ready) - {new Date().toLocaleDateString()} <br />
+                <span style={{ opacity: 0.7 }}>DB Status: {storageMode}</span>
             </footer>
         </div >
     );
