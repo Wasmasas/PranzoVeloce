@@ -12,6 +12,8 @@ const DB_KEY = 'LUNCH_APP_DB'; // Key for Redis
 // Path to our local JSON "database" (Fallback)
 const dbPath = path.join(process.cwd(), 'data', 'db.json');
 
+export const dynamic = 'force-dynamic';
+
 // --- HELPERS ---
 
 async function readDb() {
@@ -19,30 +21,31 @@ async function readDb() {
     if (USE_CLOUD_DB) {
         try {
             const data = await kv.get(DB_KEY);
-            if (!data) return { activeMenu: [], allDishes: [], orders: [], feedbacks: [] };
+            const defaultData = { activeMenu: [], allDishes: [], orders: [], feedbacks: [], config: { disableCutoff: false } };
+            if (!data) return defaultData;
 
             // Ensure compatibility if fields are missing
             if (!data.feedbacks) data.feedbacks = [];
+            if (!data.config) data.config = { disableCutoff: false };
             return data;
         } catch (error) {
             console.error('KV Read Error:', error);
-            // Fallback to empty structure on error to prevent unnecessary crashes, 
-            // though in prod this implies DB failure.
-            return { activeMenu: [], allDishes: [], orders: [], feedbacks: [] };
+            return { activeMenu: [], allDishes: [], orders: [], feedbacks: [], config: { disableCutoff: false } };
         }
     }
 
     // 2. Local File Mode (Legacy)
     if (!fs.existsSync(dbPath)) {
-        return { activeMenu: [], allDishes: [], orders: [], feedbacks: [] };
+        return { activeMenu: [], allDishes: [], orders: [], feedbacks: [], config: { disableCutoff: false } };
     }
     const data = fs.readFileSync(dbPath, 'utf8');
     try {
         const parsed = JSON.parse(data);
         if (!parsed.feedbacks) parsed.feedbacks = [];
+        if (!parsed.config) parsed.config = { disableCutoff: false };
         return parsed;
     } catch (err) {
-        return { activeMenu: [], allDishes: [], orders: [], feedbacks: [] };
+        return { activeMenu: [], allDishes: [], orders: [], feedbacks: [], config: { disableCutoff: false } };
     }
 }
 
@@ -89,7 +92,72 @@ export async function POST(req) {
             break;
 
         case 'PLACE_ORDER':
-            db.orders.push(payload);
+            const newOrder = payload;
+
+            // Stock Validation & Decrement
+            let stockError = null;
+
+            // We need to update activeMenu quantities
+            const updatedMenu = db.activeMenu.map(dish => {
+                const orderedItem = newOrder.items.find(i => i.id === dish.id);
+                if (orderedItem) {
+                    // Check availability
+                    if (dish.isSoldOut) {
+                        stockError = `${dish.name} è esaurito!`;
+                        return dish;
+                    }
+                    if (dish.quantity !== undefined && dish.quantity < orderedItem.quantity) {
+                        stockError = `Quantità non sufficiente per ${dish.name}`;
+                        return dish;
+                    }
+
+                    // Decrement logic (only if quantity is tracked, not infinity)
+                    // If quantity is undefined or null, we treat it as infinite for now unless we set default.
+                    // But user wants to set it. Let's assume if it's set, we use it.
+                    if (dish.quantity !== undefined && dish.quantity !== null) {
+                        return { ...dish, quantity: dish.quantity - orderedItem.quantity };
+                    }
+                }
+                return dish;
+            });
+
+            if (stockError) {
+                // We return a special error response? 
+                // Since this is a simple reducer-like API, we can't easily throw 400 without breaking the pattern 
+                // unless we change return type.
+                // For now, let's just NOT add the order.
+                // But the client expects success. 
+                // Ideally we should return { error: ... }
+                // Let's rely on standard logic: if db didn't change, client won't see new order?
+                // No, we need to signal error.
+                // Let's write a "error" property to the response?
+                // Or just fail silently for MVP? No, that's bad.
+                // Let's assume valid checks were done on client, but race condition might happen.
+                // I'll add logic to return error status if possible, but the `route.js` structure is:
+                // `await writeDb(db); return NextResponse.json(db);`
+                // I will modify the return to include `error`.
+                return NextResponse.json({ ...db, error: stockError }, { status: 409 });
+            }
+
+            db.activeMenu = updatedMenu;
+            db.orders.push(newOrder);
+            break;
+
+        case 'UPDATE_DISH_STOCK':
+            // Payload: { id, quantity, isSoldOut }
+            db.activeMenu = db.activeMenu.map(d => {
+                if (d.id === payload.id) {
+                    return { ...d, ...payload };
+                }
+                return d;
+            });
+            break;
+
+        case 'TOGGLE_CONFIG':
+            // Payload: { key: 'disableCutoff' }
+            if (!db.config) db.config = {};
+            // Toggle boolean value
+            db.config[payload.key] = !db.config[payload.key];
             break;
 
         case 'CANCEL_ORDER':

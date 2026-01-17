@@ -10,19 +10,40 @@ export function MenuProvider({ children }) {
     const [allDishes, setAllDishes] = useState([]);
     const [orders, setOrders] = useState([]);
     const [feedbacks, setFeedbacks] = useState([]);
+    const [config, setConfig] = useState({ disableCutoff: false });
     const [loading, setLoading] = useState(true);
     const [storageMode, setStorageMode] = useState('Unknown');
+    const [isOrderingOpen, setIsOrderingOpen] = useState(true);
+
+    const checkCutoffTime = useCallback(() => {
+        // If config says disable cutoff, we are always open
+        if (config.disableCutoff) {
+            setIsOrderingOpen(true);
+            return true;
+        }
+
+        const now = new Date();
+        const cutoff = new Date();
+        cutoff.setHours(11, 0, 0, 0);
+
+        // If it's Saturday or Sunday, maybe strict check? 
+        // For now just time based.
+        const isOpen = now < cutoff;
+        setIsOrderingOpen(isOpen);
+        return isOpen;
+    }, [config]);
 
     // Fetch initial data from API
     const fetchData = useCallback(async () => {
         try {
-            const res = await fetch('/api/data');
+            const res = await fetch('/api/data', { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
                 setActiveMenu(data.activeMenu || []);
                 setAllDishes(data.allDishes || []);
                 setOrders(data.orders || []);
                 setFeedbacks(data.feedbacks || []);
+                setConfig(data.config || { disableCutoff: false });
                 setStorageMode(data._storageMode || 'Unknown');
             }
         } catch (error) {
@@ -34,10 +55,14 @@ export function MenuProvider({ children }) {
 
     useEffect(() => {
         fetchData();
+        checkCutoffTime();
         // Optional: Polling to keep data fresh across devices
-        const interval = setInterval(fetchData, 5000);
+        const interval = setInterval(() => {
+            fetchData();
+            checkCutoffTime();
+        }, 5000);
         return () => clearInterval(interval);
-    }, [fetchData]);
+    }, [fetchData, checkCutoffTime]);
 
     // Generic Action Dispatcher
     const dispatch = async (action, payload) => {
@@ -55,7 +80,15 @@ export function MenuProvider({ children }) {
                 setAllDishes(newData.allDishes);
                 setOrders(newData.orders);
                 setFeedbacks(newData.feedbacks || []);
+                setConfig(newData.config || { disableCutoff: false });
                 return true;
+            } else if (res.status === 409) {
+                const errData = await res.json();
+                // We'll show this via Toast in the UI if possible, or simple alert here for now
+                // Actually MenuContext doesn't have useToast because it's higher up? 
+                // Wait, Contexts are separate.
+                console.error('Stock Error:', errData.error);
+                alert(`Impossibile completare l'azione: ${errData.error}`);
             } else {
                 console.error('API Error:', res.status);
             }
@@ -81,12 +114,17 @@ export function MenuProvider({ children }) {
     };
 
     const placeOrder = (order) => {
+        if (!checkCutoffTime()) {
+            // Should be handled by UI, but double check
+            return false;
+        }
         const newOrder = {
             ...order,
             id: Date.now().toString(),
             timestamp: new Date().toISOString()
         };
         dispatch('PLACE_ORDER', newOrder);
+        return true;
     };
 
     const cancelOrder = (orderId) => {
@@ -110,6 +148,15 @@ export function MenuProvider({ children }) {
         dispatch('DELETE_FEEDBACK', { id });
     };
 
+    const updateDishStock = (id, changes) => {
+        // changes: { quantity, isSoldOut }
+        dispatch('UPDATE_DISH_STOCK', { id, ...changes });
+    };
+
+    const toggleConfig = (key) => {
+        dispatch('TOGGLE_CONFIG', { key });
+    };
+
     const resetDay = () => {
         dispatch('RESET_DAY', {});
     };
@@ -120,6 +167,7 @@ export function MenuProvider({ children }) {
             allDishes,
             orders,
             feedbacks,
+            config,
             loading,
             addDishToArchive,
             removeDishFromArchive,
@@ -130,7 +178,10 @@ export function MenuProvider({ children }) {
             submitFeedback,
             deleteFeedback,
             resetDay,
-            storageMode
+            updateDishStock,
+            toggleConfig,
+            storageMode,
+            isOrderingOpen
         }}>
             {children}
         </MenuContext.Provider>

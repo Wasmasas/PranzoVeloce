@@ -29,7 +29,10 @@ export default function AdminPage() {
         resetDay,
 
         loading,
-        storageMode
+        storageMode,
+        updateDishStock,
+        config,
+        toggleConfig
     } = useMenu();
 
     const toggleOrderSelection = (id) => {
@@ -56,8 +59,12 @@ export default function AdminPage() {
 
     const handleLogin = (e) => {
         e.preventDefault();
-        if (password === 'admin123') {
-            setIsAuthenticated(true);
+        const pwd = password.trim();
+        if (pwd === 'admin123') {
+            setIsAuthenticated('admin');
+        } else if (pwd === 'St4rm4t1k123') {
+            setIsAuthenticated('superadmin');
+            addToast('Benvenuto Super Admin ⚡', 'success');
         } else {
             addToast('Password errata', 'error');
         }
@@ -135,6 +142,27 @@ export default function AdminPage() {
                     <button onClick={handleReset} className={styles.resetBtn}>Nuovo Giorno (Reset)</button>
                 </div>
             </header>
+
+            {/* Super Admin Dev Tools */}
+            {isAuthenticated === 'superadmin' && (
+                <div style={{ background: '#333', color: '#0f0', padding: '1rem', marginBottom: '1rem', borderRadius: '8px', fontFamily: 'monospace' }}>
+                    <h3 style={{ margin: 0, marginBottom: '0.5rem' }}>🔧 STRUMENTI SVILUPPATORE (Super Admin)</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span>Limite Orario 11:00:</span>
+                            <button
+                                onClick={() => toggleConfig('disableCutoff')}
+                                style={{
+                                    background: config.disableCutoff ? 'red' : 'green',
+                                    color: 'white', border: 'none', padding: '5px 10px', cursor: 'pointer', fontWeight: 'bold'
+                                }}
+                            >
+                                {config.disableCutoff ? 'DISABILITATO (Ordini sempre aperti)' : 'ATTIVO (Standard)'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <main className={styles.mainGrid}>
                 {/* Left Column: Menu Management */}
@@ -247,18 +275,60 @@ export default function AdminPage() {
                             ) : (
                                 <div className={styles.selectionGrid}>
                                     {allDishes.map(dish => {
-                                        const isActive = activeMenu.some(d => d.id === dish.id);
+                                        const activeDish = activeMenu.find(d => d.id === dish.id);
+                                        const isActive = !!activeDish;
+
                                         return (
                                             <div
                                                 key={dish.id}
                                                 className={`${styles.selectionCard} ${isActive ? styles.activeCard : ''}`}
-                                                onClick={() => toggleDishInMenu(dish)}
                                             >
-                                                <div className={styles.checkbox}>{isActive ? '✓' : ''}</div>
-                                                <div>
-                                                    <strong>{dish.name}</strong>
-                                                    <div className={styles.small}>€ {dish.price}</div>
+                                                {/* Header / Selection Area */}
+                                                <div
+                                                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: isActive ? '0.5rem' : '0' }}
+                                                    onClick={() => toggleDishInMenu(dish)}
+                                                >
+                                                    <div className={styles.checkbox}>{isActive ? '✓' : ''}</div>
+                                                    <div>
+                                                        <strong>{dish.name}</strong>
+                                                        <div className={styles.small}>€ {dish.price}</div>
+                                                    </div>
                                                 </div>
+
+                                                {/* Stock Controls (Only if Active) */}
+                                                {isActive && (
+                                                    <div style={{ marginTop: '0.5rem', borderTop: '1px solid rgba(0,0,0,0.1)', paddingTop: '0.5rem' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '5px' }}>
+                                                            <label style={{ fontSize: '0.8rem' }}>Porzioni:</label>
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                style={{ width: '60px', padding: '2px' }}
+                                                                value={activeDish.quantity !== undefined ? activeDish.quantity : 100}
+                                                                onChange={(e) => updateDishStock(dish.id, { quantity: parseInt(e.target.value) })}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            />
+                                                        </div>
+                                                        <button
+                                                            style={{
+                                                                width: '100%',
+                                                                padding: '4px',
+                                                                fontSize: '0.8rem',
+                                                                background: activeDish.isSoldOut ? 'var(--text-main)' : 'var(--danger)',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: '4px',
+                                                                cursor: 'pointer'
+                                                            }}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                updateDishStock(dish.id, { isSoldOut: !activeDish.isSoldOut });
+                                                            }}
+                                                        >
+                                                            {activeDish.isSoldOut ? 'RIATTIVA DISPONIBILITÀ' : 'SEGNA COME FINITO'}
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })}
@@ -359,8 +429,7 @@ export default function AdminPage() {
                 </section>
             </main>
             <footer style={{ marginTop: '2rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-                PranzoVeloce Admin v1.2 (Cloud Ready) - {new Date().toLocaleDateString()} <br />
-                <span style={{ opacity: 0.7 }}>DB Status: {storageMode}</span>
+                PranzoVeloce Admin v1.2 - {new Date().toLocaleDateString()}
             </footer>
         </div >
     );

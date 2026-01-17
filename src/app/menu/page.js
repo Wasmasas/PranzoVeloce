@@ -13,7 +13,8 @@ export default function MenuPage() {
         orders,
         allDishes,
         loading,
-        cancelOrder
+        cancelOrder,
+        isOrderingOpen
     } = useMenu();
 
     const { addToast } = useToast();
@@ -198,6 +199,20 @@ export default function MenuPage() {
                 <div className={styles.emptyState}>
                     <p>Il menu non è ancora stato caricato dal ristorante. Riprova più tardi!</p>
                 </div>
+            ) : !isOrderingOpen ? (
+                <div className={styles.closedState} style={{
+                    textAlign: 'center',
+                    padding: '3rem',
+                    background: '#fff3cd',
+                    border: '1px solid #ffeeba',
+                    color: '#856404',
+                    borderRadius: '8px',
+                    margin: '2rem 0'
+                }}>
+                    <h2 style={{ marginBottom: '1rem' }}>🕑 Ordini Chiusi</h2>
+                    <p>È passato l&apos;orario limite delle 11:00.</p>
+                    <p>Non è più possibile inviare nuovi ordini per oggi.</p>
+                </div>
             ) : (
                 <form onSubmit={handleSubmit}>
                     {Object.entries(itemsByCategory).map(([category, items]) => (
@@ -206,16 +221,50 @@ export default function MenuPage() {
                             <div className={styles.grid}>
                                 {items.map(item => {
                                     const isSelected = !!cart[item.id];
+
+                                    // Stock Checks
+                                    const isSoldOut = item.isSoldOut;
+                                    const isOutOfStock = item.quantity !== undefined && item.quantity <= 0;
+                                    const isDisabled = isSoldOut || isOutOfStock;
+
                                     return (
                                         <div
                                             key={item.id}
                                             className={`${styles.card} ${isSelected ? styles.selected : ''}`}
-                                            onClick={() => toggleItem(item)} // Click entire card to toggle
-                                            style={{ cursor: 'pointer' }}
+                                            onClick={() => !isDisabled && toggleItem(item)}
+                                            style={{
+                                                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                                opacity: isDisabled ? 0.6 : 1,
+                                                position: 'relative',
+                                                overflow: 'hidden'
+                                            }}
                                         >
+                                            {isDisabled && (
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: '10px',
+                                                    right: '-30px',
+                                                    background: 'var(--danger)',
+                                                    color: 'white',
+                                                    padding: '2px 30px',
+                                                    transform: 'rotate(45deg)',
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: 'bold',
+                                                    zIndex: 10
+                                                }}>
+                                                    ESAURITO
+                                                </div>
+                                            )}
+
                                             <div className={styles.cardInfo}>
                                                 <h3>{item.name}</h3>
                                                 <span className={styles.price}>€ {item.price}</span>
+                                                {/* Optional: Show remaining quantity if low? */}
+                                                {!isDisabled && item.quantity !== undefined && item.quantity < 10 && (
+                                                    <div style={{ fontSize: '0.7rem', color: 'orange', marginTop: '4px' }}>
+                                                        Solo {item.quantity} rimasti!
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className={styles.controls}>
                                                 <div style={{
