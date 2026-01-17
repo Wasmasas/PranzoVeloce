@@ -14,6 +14,7 @@ export function MenuProvider({ children }) {
     const [loading, setLoading] = useState(true);
     const [storageMode, setStorageMode] = useState('Unknown');
     const [isOrderingOpen, setIsOrderingOpen] = useState(true);
+    const [tables, setTables] = useState([]); // New tables state
 
     const checkCutoffTime = useCallback(() => {
         // If config says disable cutoff, we are always open
@@ -44,6 +45,7 @@ export function MenuProvider({ children }) {
                 setOrders(data.orders || []);
                 setFeedbacks(data.feedbacks || []);
                 setConfig(data.config || { disableCutoff: false });
+                setTables(data.tables || []); // Set tables from API
                 setStorageMode(data._storageMode || 'Unknown');
             }
         } catch (error) {
@@ -81,6 +83,7 @@ export function MenuProvider({ children }) {
                 setOrders(newData.orders);
                 setFeedbacks(newData.feedbacks || []);
                 setConfig(newData.config || { disableCutoff: false });
+                setTables(newData.tables || []); // Update tables after dispatch
                 return true;
             } else if (res.status === 409) {
                 const errData = await res.json();
@@ -157,6 +160,21 @@ export function MenuProvider({ children }) {
         dispatch('TOGGLE_CONFIG', { key });
     };
 
+    const addTable = (table) => {
+        // table: { name, capacity }
+        const newTable = { ...table, id: Date.now().toString() };
+        dispatch('ADD_TABLE', newTable);
+    };
+
+    const removeTable = (id) => {
+        dispatch('REMOVE_TABLE', { id });
+    };
+
+    const updateTable = (id, updates) => {
+        // updates: { name, capacity }
+        dispatch('UPDATE_TABLE', { id, ...updates });
+    };
+
     const resetDay = () => {
         dispatch('RESET_DAY', {});
     };
@@ -168,6 +186,7 @@ export function MenuProvider({ children }) {
             orders,
             feedbacks,
             config,
+            tables, // Expose tables
             loading,
             addDishToArchive,
             removeDishFromArchive,
@@ -180,6 +199,9 @@ export function MenuProvider({ children }) {
             resetDay,
             updateDishStock,
             toggleConfig,
+            addTable, // Expose addTable
+            removeTable, // Expose removeTable
+            updateTable, // Expose updateTable
             storageMode,
             isOrderingOpen
         }}>

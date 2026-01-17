@@ -1,68 +1,161 @@
 {
   "activeMenu": [
     {
-      "name": "asd",
-      "price": "12",
+      "name": "Lasagna",
+      "price": "8",
       "category": "primo",
-      "id": "1768056307730"
+      "id": "1768059479724",
+      "quantity": 0
     },
     {
-      "name": "saaaa",
-      "price": "12",
-      "category": "primo",
-      "id": "1768056319159"
+      "name": "Pollo",
+      "price": "6.5",
+      "category": "secondo",
+      "id": "1768059486171"
     },
     {
-      "name": "sddsd",
-      "price": "15",
-      "category": "primo",
-      "id": "1768056333165"
+      "name": "Salsiccia",
+      "price": "6.5",
+      "category": "secondo",
+      "id": "1768059494073"
     },
     {
-      "name": "wqe",
+      "name": "Pomodirini",
       "price": "3",
       "category": "contorno",
-      "id": "1768056341635"
+      "id": "1768059502027"
     },
     {
-      "name": "wqed",
-      "price": "4",
+      "name": "Patate al forno",
+      "price": "3",
       "category": "contorno",
-      "id": "1768056349036"
+      "id": "1768059509376"
+    },
+    {
+      "name": "Pasta con pomodoro",
+      "price": "6",
+      "category": "primo",
+      "id": "1768059472566"
+    },
+    {
+      "name": "Pasta con tonno",
+      "price": "7",
+      "category": "primo",
+      "id": "1768059464820"
     }
   ],
   "allDishes": [
     {
-      "name": "asd",
-      "price": "12",
+      "name": "Pasta con tonno",
+      "price": "7",
       "category": "primo",
-      "id": "1768056307730"
+      "id": "1768059464820"
     },
     {
-      "name": "saaaa",
-      "price": "12",
+      "name": "Pasta con pomodoro",
+      "price": "6",
       "category": "primo",
-      "id": "1768056319159"
+      "id": "1768059472566"
     },
     {
-      "name": "sddsd",
-      "price": "15",
+      "name": "Lasagna",
+      "price": "8",
       "category": "primo",
-      "id": "1768056333165"
+      "id": "1768059479724"
     },
     {
-      "name": "wqe",
+      "name": "Pollo",
+      "price": "6.5",
+      "category": "secondo",
+      "id": "1768059486171"
+    },
+    {
+      "name": "Salsiccia",
+      "price": "6.5",
+      "category": "secondo",
+      "id": "1768059494073"
+    },
+    {
+      "name": "Pomodirini",
       "price": "3",
       "category": "contorno",
-      "id": "1768056341635"
+      "id": "1768059502027"
     },
     {
-      "name": "wqed",
-      "price": "4",
+      "name": "Patate al forno",
+      "price": "3",
       "category": "contorno",
-      "id": "1768056349036"
+      "id": "1768059509376"
     }
   ],
-  "orders": [],
-  "feedbacks": []
+  "orders": [
+    {
+      "employeeName": "lol",
+      "matricola": "221",
+      "table": "Tavolo 1",
+      "items": [
+        {
+          "id": "1768059479724",
+          "quantity": 1
+        }
+      ],
+      "id": "1768667864144",
+      "timestamp": "2026-01-17T16:37:44.144Z"
+    },
+    {
+      "employeeName": "ern",
+      "matricola": "222",
+      "table": "Tavolo 1",
+      "items": [
+        {
+          "id": "1768059464820",
+          "quantity": 1
+        },
+        {
+          "id": "1768059502027",
+          "quantity": 1
+        }
+      ],
+      "id": "1768667911922",
+      "timestamp": "2026-01-17T16:38:31.922Z"
+    },
+    {
+      "employeeName": "dss",
+      "matricola": "111",
+      "table": "Tavolo 1",
+      "items": [
+        {
+          "id": "1768059486171",
+          "quantity": 1
+        },
+        {
+          "id": "1768059502027",
+          "quantity": 1
+        }
+      ],
+      "id": "1768667924920",
+      "timestamp": "2026-01-17T16:38:44.920Z"
+    }
+  ],
+  "feedbacks": [],
+  "config": {
+    "disableCutoff": true
+  },
+  "tables": [
+    {
+      "id": "t1",
+      "name": "Tavolo 1",
+      "capacity": 6
+    },
+    {
+      "id": "t2",
+      "name": "Tavolo 2",
+      "capacity": 10
+    },
+    {
+      "id": "t3",
+      "name": "Tavolo 3",
+      "capacity": 10
+    }
+  ]
 }

@@ -32,7 +32,11 @@ export default function AdminPage() {
         storageMode,
         updateDishStock,
         config,
-        toggleConfig
+        toggleConfig,
+        tables,
+        addTable,
+        removeTable,
+        updateTable
     } = useMenu();
 
     const toggleOrderSelection = (id) => {
@@ -147,7 +151,9 @@ export default function AdminPage() {
             {isAuthenticated === 'superadmin' && (
                 <div style={{ background: '#333', color: '#0f0', padding: '1rem', marginBottom: '1rem', borderRadius: '8px', fontFamily: 'monospace' }}>
                     <h3 style={{ margin: 0, marginBottom: '0.5rem' }}>🔧 STRUMENTI SVILUPPATORE (Super Admin)</h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+
+                    {/* Config Toggles */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <span>Limite Orario 11:00:</span>
                             <button
@@ -159,6 +165,75 @@ export default function AdminPage() {
                             >
                                 {config.disableCutoff ? 'DISABILITATO (Ordini sempre aperti)' : 'ATTIVO (Standard)'}
                             </button>
+                        </div>
+                    </div>
+
+                    {/* Table Management */}
+                    <div style={{ borderTop: '1px solid #555', paddingTop: '1rem' }}>
+                        <h4 style={{ marginTop: 0, marginBottom: '0.5rem' }}>Gestione Tavoli</h4>
+                        <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+                            {/* Table List */}
+                            <div>
+                                <h5 style={{ margin: '0 0 5px 0', color: '#ccc' }}>Tavoli Attivi (Modifica in tempo reale):</h5>
+                                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                                    {tables.map(t => (
+                                        <li key={t.id} style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <input
+                                                type="text"
+                                                defaultValue={t.name}
+                                                onBlur={(e) => {
+                                                    if (e.target.value !== t.name) {
+                                                        updateTable(t.id, { name: e.target.value });
+                                                        addToast('Nome tavolo aggiornato', 'success');
+                                                    }
+                                                }}
+                                                style={{ padding: '4px', width: '120px' }}
+                                            />
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                <span style={{ fontSize: '0.8rem', color: '#aaa' }}>Posti:</span>
+                                                <input
+                                                    type="number"
+                                                    defaultValue={t.capacity}
+                                                    min="1"
+                                                    onBlur={(e) => {
+                                                        const val = parseInt(e.target.value);
+                                                        if (val !== t.capacity && val > 0) {
+                                                            updateTable(t.id, { capacity: val });
+                                                            addToast('Capienza aggiornata', 'success');
+                                                        }
+                                                    }}
+                                                    style={{ padding: '4px', width: '60px' }}
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm(`Eliminare ${t.name}?`)) removeTable(t.id);
+                                                }}
+                                                style={{ background: 'red', color: 'white', border: 'none', cursor: 'pointer', padding: '4px 8px', fontSize: '0.8rem', marginLeft: 'auto' }}
+                                            >Elimina</button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            {/* Add Table Form */}
+                            <div style={{ background: '#444', padding: '10px', borderRadius: '4px' }}>
+                                <h5 style={{ margin: '0 0 5px 0', color: '#ccc' }}>Aggiungi Tavolo:</h5>
+                                <form onSubmit={(e) => {
+                                    e.preventDefault();
+                                    const name = e.target.tableName.value;
+                                    const capacity = parseInt(e.target.tableCapacity.value);
+                                    if (name && capacity > 0) {
+                                        addTable({ name, capacity });
+                                        e.target.reset();
+                                        addToast('Tavolo aggiunto', 'success');
+                                    }
+                                }} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                    <input name="tableName" placeholder="Nome (es. Tavolo 4)" required style={{ padding: '4px' }} />
+                                    <input name="tableCapacity" type="number" min="1" placeholder="Posti" required style={{ width: '60px', padding: '4px' }} />
+                                    <button type="submit" style={{ background: '#0f0', color: '#000', border: 'none', padding: '5px 10px', cursor: 'pointer', fontWeight: 'bold' }}>+</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -353,6 +428,25 @@ export default function AdminPage() {
                                         Elimina ({selectedOrders.length})
                                     </button>
                                 )}
+                                <button
+                                    onClick={() => {
+                                        // Export Logic
+                                        const textContent = orders.map(o => `Nome : ${o.employeeName}\nMatricola : ${o.matricola || 'N/A'}`).join('\n----------------\n') + '\n----------------';
+                                        const blob = new Blob([textContent], { type: 'text/plain' });
+                                        const url = URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `ordini_${new Date().toLocaleDateString('it-IT').replace(/\//g, '-')}.txt`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        document.body.removeChild(a);
+                                        URL.revokeObjectURL(url);
+                                    }}
+                                    className="btn"
+                                    style={{ background: 'var(--primary)', color: 'white', fontSize: '0.85rem', padding: '0.5rem' }}
+                                >
+                                    Esporta TXT 📄
+                                </button>
                                 <button
                                     onClick={handleDeleteAll}
                                     className="btn"

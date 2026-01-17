@@ -27,25 +27,35 @@ async function readDb() {
             // Ensure compatibility if fields are missing
             if (!data.feedbacks) data.feedbacks = [];
             if (!data.config) data.config = { disableCutoff: false };
+            if (!data.tables) data.tables = [
+                { id: 't1', name: 'Tavolo 1', capacity: 10 },
+                { id: 't2', name: 'Tavolo 2', capacity: 10 },
+                { id: 't3', name: 'Tavolo 3', capacity: 10 }
+            ];
             return data;
         } catch (error) {
             console.error('KV Read Error:', error);
-            return { activeMenu: [], allDishes: [], orders: [], feedbacks: [], config: { disableCutoff: false } };
+            return { activeMenu: [], allDishes: [], orders: [], feedbacks: [], config: { disableCutoff: false }, tables: [] };
         }
     }
 
     // 2. Local File Mode (Legacy)
     if (!fs.existsSync(dbPath)) {
-        return { activeMenu: [], allDishes: [], orders: [], feedbacks: [], config: { disableCutoff: false } };
+        return { activeMenu: [], allDishes: [], orders: [], feedbacks: [], config: { disableCutoff: false }, tables: [] };
     }
     const data = fs.readFileSync(dbPath, 'utf8');
     try {
         const parsed = JSON.parse(data);
         if (!parsed.feedbacks) parsed.feedbacks = [];
         if (!parsed.config) parsed.config = { disableCutoff: false };
+        if (!parsed.tables) parsed.tables = [
+            { id: 't1', name: 'Tavolo 1', capacity: 10 },
+            { id: 't2', name: 'Tavolo 2', capacity: 10 },
+            { id: 't3', name: 'Tavolo 3', capacity: 10 }
+        ];
         return parsed;
     } catch (err) {
-        return { activeMenu: [], allDishes: [], orders: [], feedbacks: [], config: { disableCutoff: false } };
+        return { activeMenu: [], allDishes: [], orders: [], feedbacks: [], config: { disableCutoff: false }, tables: [] };
     }
 }
 
@@ -161,7 +171,20 @@ export async function POST(req) {
             break;
 
         case 'CANCEL_ORDER':
-            db.orders = db.orders.filter(o => o.id !== payload.orderId);
+            const orderToCancel = db.orders.find(o => o.id === payload.orderId);
+            if (orderToCancel) {
+                // Restore Stock
+                db.activeMenu = db.activeMenu.map(dish => {
+                    const itemInOrder = orderToCancel.items.find(i => i.id === dish.id);
+                    if (itemInOrder && dish.quantity !== undefined && dish.quantity !== null) {
+                        // Only restore if it's not unlimited
+                        return { ...dish, quantity: dish.quantity + itemInOrder.quantity };
+                    }
+                    return dish;
+                });
+
+                db.orders = db.orders.filter(o => o.id !== payload.orderId);
+            }
             break;
 
         case 'DELETE_ALL_ORDERS':
@@ -179,6 +202,29 @@ export async function POST(req) {
         case 'RESET_DAY':
             db.activeMenu = [];
             db.orders = [];
+            break;
+
+        case 'ADD_TABLE':
+            if (!db.tables) db.tables = [];
+            db.tables.push(payload);
+            break;
+
+        case 'REMOVE_TABLE':
+            if (db.tables) {
+                db.tables = db.tables.filter(t => t.id !== payload.id);
+            }
+            break;
+
+        case 'UPDATE_TABLE':
+            // Payload: { id, name, capacity }
+            if (db.tables) {
+                db.tables = db.tables.map(t => {
+                    if (t.id === payload.id) {
+                        return { ...t, ...payload };
+                    }
+                    return t;
+                });
+            }
             break;
 
         default:

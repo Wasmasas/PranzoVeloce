@@ -14,14 +14,23 @@ export default function MenuPage() {
         allDishes,
         loading,
         cancelOrder,
-        isOrderingOpen
+        isOrderingOpen,
+        tables
     } = useMenu();
 
     const { addToast } = useToast();
 
-    const [cart, setCart] = useState({}); // { itemId: 1 } - Quantity is always 1 now
+    // Fallback if tables are empty (shouldn't happen with new defaults but safe)
+    const availableTables = tables && tables.length > 0 ? tables : [
+        { id: 't1', name: 'Tavolo 1', capacity: 10 },
+        { id: 't2', name: 'Tavolo 2', capacity: 10 },
+        { id: 't3', name: 'Tavolo 3', capacity: 10 }
+    ];
+
+    const [cart, setCart] = useState({});
     const [employeeName, setEmployeeName] = useState('');
     const [matricola, setMatricola] = useState('');
+    const [selectedTable, setSelectedTable] = useState(availableTables[0]?.name || 'Tavolo 1');
     const [step, setStep] = useState('login'); // 'login' or 'order'
 
     // Check if this matricola already has an order
@@ -36,23 +45,21 @@ export default function MenuPage() {
 
     const handleMatricolaChange = (e) => {
         const val = e.target.value;
-        // Allow only numbers
-        if (/^\d*$/.test(val)) {
-            setMatricola(val);
-        }
+        if (/^\d*$/.test(val)) setMatricola(val);
     };
 
     const handleNameChange = (e) => {
         const val = e.target.value;
-        // Allow only letters and spaces
-        if (/^[a-zA-Z\s]*$/.test(val)) {
-            setEmployeeName(val);
-        }
+        if (/^[a-zA-Z\s]*$/.test(val)) setEmployeeName(val);
     };
 
     const toggleItem = (item) => {
         setCart(prev => {
             const isSelected = !!prev[item.id];
+            const MAINS = ['primo', 'secondo'];
+            const SIDES = ['contorno'];
+            const isMain = MAINS.includes(item.category);
+            const isSide = SIDES.includes(item.category);
 
             if (isSelected) {
                 // Deselect
@@ -61,30 +68,67 @@ export default function MenuPage() {
                 return newCart;
             } else {
                 // Select Logic
+                let newCart = { ...prev };
 
-                // 1. Check Budget Cap (< 15 euro)
-                const currentTotal = Object.keys(prev).reduce((sum, id) => {
-                    const dish = activeMenu.find(d => d.id === id);
-                    return sum + (dish ? parseFloat(dish.price) : 0);
-                }, 0);
+                // LOGIC V10: 
+                // 1. Only 1 Main Dish (Primo OR Secondo)
+                // 2. If Main > 7.50, NO Sides allowed.
+                // 3. If Main <= 7.50, Sides allowed.
 
-                if (currentTotal + parseFloat(item.price) > 15) {
-                    addToast('Budget superato! Max €15.00', 'error');
-                    return prev;
+                if (isMain) {
+                    // Remove any existing Main (Swap behavior)
+                    for (const id of Object.keys(newCart)) {
+                        const d = activeMenu.find(dish => dish.id === id);
+                        // Fallback to allDishes if not in activeMenu (rare but safe)
+                        const detail = d || allDishes.find(ad => ad.id === id);
+                        if (detail && MAINS.includes(detail.category)) {
+                            delete newCart[id];
+                        }
+                    }
+
+                    // If this new main is expensive (> 7.50), remove any existing sides
+                    if (parseFloat(item.price) > 7.50) {
+                        for (const id of Object.keys(newCart)) {
+                            const d = activeMenu.find(dish => dish.id === id);
+                            const detail = d || allDishes.find(ad => ad.id === id);
+                            if (detail && SIDES.includes(detail.category)) {
+                                delete newCart[id];
+                                addToast('Contorno rimosso (Piatto > 7.50€)', 'info');
+                            }
+                        }
+                    }
                 }
 
-                // 2. Check Category Uniqueness (Max 1 per category)
-                // If another item of same category exists, remove it (switch selection)
-                const newCart = { ...prev };
+                if (isSide) {
+                    // Check if we have an expensive main selected
+                    const expensiveMainId = Object.keys(newCart).find(id => {
+                        const d = activeMenu.find(dish => dish.id === id);
+                        const detail = d || allDishes.find(ad => ad.id === id);
+                        return detail && MAINS.includes(detail.category) && parseFloat(detail.price) > 7.50;
+                    });
 
-                // Find if there's an existing item with same category
-                const existingIdInCat = Object.keys(newCart).find(id => {
-                    const d = activeMenu.find(dish => dish.id === id);
-                    return d && d.category === item.category;
-                });
+                    if (expensiveMainId) {
+                        addToast('Non puoi aggiungere contorni con un piatto > 7.50€', 'error');
+                        return prev; // Block selection
+                    }
 
-                if (existingIdInCat) {
-                    delete newCart[existingIdInCat]; // Remove old choice
+                    // Also check Category Uniqueness for Sides (Max 1 Side?)
+                    // User didn't specify multiple sides allowed or not. 
+                    // Previously rule was "Max 1 item per category". I'll keep that for Sides too to be safe/consistent.
+                    const existingIdInCat = Object.keys(newCart).find(id => {
+                        const d = activeMenu.find(dish => dish.id === id);
+                        return d && d.category === item.category;
+                    });
+                    if (existingIdInCat) delete newCart[existingIdInCat];
+                }
+
+                // If it is neither (e.g. Dessert/Drink?), keep old category uniqueness rule
+                if (!isMain && !isSide) {
+                    const existingIdInCat = Object.keys(newCart).find(id => {
+                        const d = activeMenu.find(dish => dish.id === id);
+                        return d && d.category === item.category;
+                    });
+                    if (existingIdInCat) delete newCart[existingIdInCat];
                 }
 
                 newCart[item.id] = 1;
@@ -98,12 +142,9 @@ export default function MenuPage() {
         if (!employeeName || Object.keys(cart).length === 0) return;
 
         const items = Object.entries(cart).map(([id, quantity]) => ({ id, quantity }));
-        placeOrder({ employeeName, matricola, items });
-        setCart({}); // Reset cart
+        placeOrder({ employeeName, matricola, table: selectedTable, items });
+        setCart({});
         addToast('Ordine inviato con successo!', 'success');
-        // Stay on order page or go back to login? Usually go back to show "Existing Order" state
-        // The existingOrder check works on render, so we just need to trigger a re-render or let it handle itself.
-        // Step state will remain 'order' but next render will show 'existingOrder' screen if logic holds.
     };
 
     const handleCancelOrder = () => {
@@ -113,9 +154,17 @@ export default function MenuPage() {
         }
     };
 
+    // Calculate seats taken per table based on active orders
+    const tableCounts = {};
+    orders.forEach(o => {
+        if (o.table) {
+            tableCounts[o.table] = (tableCounts[o.table] || 0) + 1; // Assuming 1 person per order
+        }
+    });
+
     if (loading) return <div className={styles.loading}>Caricamento...</div>;
 
-    // STEP 1: Matricola Entry
+    // STEP 1: Matricola
     if (step === 'login') {
         return (
             <div className={styles.container}>
@@ -141,7 +190,7 @@ export default function MenuPage() {
         );
     }
 
-    // STEP 2: View Existing Order (if any)
+    // STEP 2: Existing Order
     if (existingOrder) {
         return (
             <div className={styles.container}>
@@ -153,19 +202,12 @@ export default function MenuPage() {
                         <ul>
                             {existingOrder.items.map((item, idx) => {
                                 const detail = activeMenu.find(m => m.id === item.id) || allDishes.find(d => d.id === item.id);
-                                return <li key={idx}>1x {detail ? detail.name : '???'}</li> // Always 1x now
+                                return <li key={idx}>1x {detail ? detail.name : '???'}</li>
                             })}
                         </ul>
                     </div>
                     <p>Il pranzo sarà pronto alle 12:30.</p>
-
-                    <button
-                        onClick={handleCancelOrder}
-                        className="btn"
-                        style={{ background: 'var(--danger)', color: 'white', marginTop: '1rem' }}
-                    >
-                        Annulla Ordine 🗑️
-                    </button>
+                    <button onClick={handleCancelOrder} className="btn" style={{ background: 'var(--danger)', color: 'white', marginTop: '1rem' }}>Annulla Ordine 🗑️</button>
                     <br />
                     <Link href="/" className={styles.backLink} style={{ marginTop: '1rem', display: 'block' }}>Torna alla Home</Link>
                 </div>
@@ -174,14 +216,12 @@ export default function MenuPage() {
     }
 
     // STEP 3: Order Form
-    // Group items by category
     const itemsByCategory = activeMenu.reduce((acc, item) => {
         if (!acc[item.category]) acc[item.category] = [];
         acc[item.category].push(item);
         return acc;
     }, {});
 
-    // Total price calculation
     const currentTotal = Object.keys(cart).reduce((sum, id) => {
         const d = activeMenu.find(dish => dish.id === id);
         return sum + (d ? parseFloat(d.price) : 0);
@@ -200,15 +240,7 @@ export default function MenuPage() {
                     <p>Il menu non è ancora stato caricato dal ristorante. Riprova più tardi!</p>
                 </div>
             ) : !isOrderingOpen ? (
-                <div className={styles.closedState} style={{
-                    textAlign: 'center',
-                    padding: '3rem',
-                    background: '#fff3cd',
-                    border: '1px solid #ffeeba',
-                    color: '#856404',
-                    borderRadius: '8px',
-                    margin: '2rem 0'
-                }}>
+                <div className={styles.closedState} style={{ textAlign: 'center', padding: '3rem', background: '#fff3cd', border: '1px solid #ffeeba', color: '#856404', borderRadius: '8px', margin: '2rem 0' }}>
                     <h2 style={{ marginBottom: '1rem' }}>🕑 Ordini Chiusi</h2>
                     <p>È passato l&apos;orario limite delle 11:00.</p>
                     <p>Non è più possibile inviare nuovi ordini per oggi.</p>
@@ -221,11 +253,27 @@ export default function MenuPage() {
                             <div className={styles.grid}>
                                 {items.map(item => {
                                     const isSelected = !!cart[item.id];
-
-                                    // Stock Checks
                                     const isSoldOut = item.isSoldOut;
                                     const isOutOfStock = item.quantity !== undefined && item.quantity <= 0;
-                                    const isDisabled = isSoldOut || isOutOfStock;
+
+                                    // Logic Checks for disabling
+                                    let isBlocked = false;
+                                    const MAINS = ['primo', 'secondo'];
+                                    const isSide = item.category === 'contorno';
+
+                                    if (isSide) {
+                                        // Check if we have an expensive main selected
+                                        const expensiveMain = Object.keys(cart).some(id => {
+                                            const d = activeMenu.find(dish => dish.id === id);
+                                            // Fallback
+                                            const detail = d || allDishes.find(ad => ad.id === id);
+                                            return detail && MAINS.includes(detail.category) && parseFloat(detail.price) > 7.50;
+                                        });
+                                        if (expensiveMain) isBlocked = true;
+                                    }
+
+                                    const isUnavailable = isSoldOut || isOutOfStock;
+                                    const isDisabled = isUnavailable || isBlocked;
 
                                     return (
                                         <div
@@ -236,10 +284,12 @@ export default function MenuPage() {
                                                 cursor: isDisabled ? 'not-allowed' : 'pointer',
                                                 opacity: isDisabled ? 0.6 : 1,
                                                 position: 'relative',
-                                                overflow: 'hidden'
+                                                overflow: 'hidden',
+                                                // Optional: Add grayscale if blocked but not sold out?
+                                                filter: isBlocked && !isUnavailable ? 'grayscale(0.8)' : 'none'
                                             }}
                                         >
-                                            {isDisabled && (
+                                            {isUnavailable && (
                                                 <div style={{
                                                     position: 'absolute',
                                                     top: '10px',
@@ -255,30 +305,15 @@ export default function MenuPage() {
                                                     ESAURITO
                                                 </div>
                                             )}
-
                                             <div className={styles.cardInfo}>
                                                 <h3>{item.name}</h3>
                                                 <span className={styles.price}>€ {item.price}</span>
-                                                {/* Optional: Show remaining quantity if low? */}
                                                 {!isDisabled && item.quantity !== undefined && item.quantity < 10 && (
-                                                    <div style={{ fontSize: '0.7rem', color: 'orange', marginTop: '4px' }}>
-                                                        Solo {item.quantity} rimasti!
-                                                    </div>
+                                                    <div style={{ fontSize: '0.7rem', color: 'orange', marginTop: '4px' }}>Solo {item.quantity} rimasti!</div>
                                                 )}
                                             </div>
                                             <div className={styles.controls}>
-                                                <div style={{
-                                                    width: '24px',
-                                                    height: '24px',
-                                                    borderRadius: '50%',
-                                                    border: '2px solid var(--primary)',
-                                                    background: isSelected ? 'var(--primary)' : 'transparent',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    color: 'white',
-                                                    fontWeight: 'bold'
-                                                }}>
+                                                <div style={{ width: '24px', height: '24px', borderRadius: '50%', border: '2px solid var(--primary)', background: isSelected ? 'var(--primary)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>
                                                     {isSelected && '✓'}
                                                 </div>
                                             </div>
@@ -294,6 +329,23 @@ export default function MenuPage() {
                             <span>Totale: <strong>€ {currentTotal.toFixed(2)}</strong> <small>(Max 15€)</small></span>
                         </div>
                         <div className={styles.submitRow}>
+                            <select
+                                value={selectedTable}
+                                onChange={(e) => setSelectedTable(e.target.value)}
+                                className={styles.nameInput}
+                                style={{ flex: '0 0 auto', width: 'auto', marginRight: '0.5rem', cursor: 'pointer' }}
+                            >
+                                {availableTables.map(t => {
+                                    const taken = tableCounts[t.name] || 0;
+                                    const isFull = taken >= t.capacity;
+                                    return (
+                                        <option key={t.id} value={t.name} disabled={isFull}>
+                                            {t.name} {isFull ? '(PIENO)' : `(${taken}/${t.capacity})`}
+                                        </option>
+                                    );
+                                })}
+                            </select>
+
                             <input
                                 type="text"
                                 placeholder="Il tuo Nome (solo lettere)"
