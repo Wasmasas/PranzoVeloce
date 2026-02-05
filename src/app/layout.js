@@ -2,6 +2,7 @@ import './globals.css';
 import { MenuProvider } from '../context/MenuContext';
 import { ToastProvider } from '../context/ToastContext';
 import FeedbackWidget from '../components/FeedbackWidget';
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata = {
   title: 'PranzoVeloce',
@@ -21,6 +22,7 @@ export default function RootLayout({ children }) {
             </div>
           </MenuProvider>
         </ToastProvider>
+        <Analytics />
       </body>
     </html>
   );
