@@ -1,12 +1,20 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { kv } from '@vercel/kv';
+import { createClient } from '@vercel/kv';
 
 // --- CONFIGURATION ---
-// If KV_REST_API_URL is defined, we use Vercel KV (Cloud).
-// Otherwise, we use local JSON file (Local Dev).
-const USE_CLOUD_DB = !!process.env.KV_REST_API_URL;
+// After migrating off the old (dead) Vercel KV store, the new Redis
+// integration injects credentials under a "Storages_" prefix to avoid
+// clashing with the old broken variable names. We read those explicitly
+// and build our own client instead of relying on the default `kv` export,
+// which only auto-reads the unprefixed KV_REST_API_URL / KV_REST_API_TOKEN.
+const KV_URL = process.env.Storages_KV_REST_API_URL;
+const KV_TOKEN = process.env.Storages_KV_REST_API_TOKEN; // write-capable token (not the read-only one)
+
+const USE_CLOUD_DB = !!(KV_URL && KV_TOKEN);
+const kv = USE_CLOUD_DB ? createClient({ url: KV_URL, token: KV_TOKEN }) : null;
+
 const DB_KEY = 'LUNCH_APP_DB'; // Key for Redis
 
 // Path to our local JSON "database" (Fallback)
